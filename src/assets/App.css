@@ -1,0 +1,8 @@
+.map {
+  display: grid;
+}
+
+.map button {
+  padding: 0.5rem;
+  height: 50px;
+}
