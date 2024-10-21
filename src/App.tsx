@@ -67,7 +67,6 @@ export default function App() {
   const [gameState, setGameState] = React.useState<boolean>(false)
   const [currentMap, setCurrentMap] = React.useState<Place[] | undefined>(undefined)
   const [flags, setFlags] = React.useState(bombs)
-  const [gameConfig, setGameConfig] = React.useState()
   const points = React.useRef<HTMLDivElement | null>(null);
   const title = React.useRef<HTMLDivElement | null>(null);
 
@@ -227,9 +226,9 @@ export default function App() {
       </section>
     </section>
     <header>
-      <div>{flags}</div>
+      <div className="numbers">{flags}</div>
       <button className="button" onClick={reset}>Reset</button>
-      <div ref={points}>0</div>
+      <div className="numbers" ref={points}></div>
     </header>
     <section className="map"
       style={{ gridTemplateColumns: `repeat(${(8)}, ${100/8}%)`}}

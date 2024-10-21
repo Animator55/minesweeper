@@ -1,3 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
+
+* {
+  
+  font-family: "Orbitron", sans-serif;
+}
+
 body {
   display: flex;
   align-items: center;
@@ -8,6 +15,19 @@ body {
 }
 header {
   display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.numbers {
+  height: 100%;
+  color: red;
+  width: 100%;
+  position: relative;
+}
+.numbers:last-child {
+  text-align: end;
 }
 
 .pop {
@@ -54,7 +74,8 @@ header {
   justify-content: center;
   height: 10dvw;
   max-height: 70px;
-  border: 2px solid rgb(126, 121, 175);
+  border: 2px solid rgb(152, 164, 221);
+  color: rgb(177, 189, 255);
   background-color: rgb(44, 44, 44);
 }
 
