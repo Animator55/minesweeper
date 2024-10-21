@@ -5,8 +5,24 @@ import React from "react"
 
 import "./assets/App.css"
 
+const checkSurroundings = (index: number, diff: number) => {
+  let result = []
+
+  for (let j = 1; j <= 8; j++) {
+    let multiply = j < 4 ? -1 : j > 5 ? 1 : 0
+    let add = j === 1 || j === 4 || j === 6 ? -1 : j === 3 || j === 5 || j === 8 ? +1 : 0
+
+    if ((index % (diff * 8) === 0 && add === -1)
+      || ((index + 1) % (diff * 8) === 0 && add === +1)) continue
+    let secIndex = index + (8 * multiply) + add
+    result.push(secIndex)
+  }
+
+  return result
+}
+
 // diff: number
-const generateMap = (diff: number) => {
+const generateMap = (diff: number, inmune: number) => {
   let placeList: Place[] = []
 
   for (let i = 0; i < (diff * 8) * (diff * 8); i++) {
@@ -20,9 +36,12 @@ const generateMap = (diff: number) => {
   }
 
   // addBombs 
-  for (let i = 0; i < diff * diff * 10; i++) {
+  for (let i = 0; i < diff * 10; i++) {
     let index = Math.floor(Math.random() * ((diff * 8) * (diff * 8) + 1))
-    while (!placeList[index] || placeList[index].bomb === true) {
+    while (!placeList[index]
+      || placeList[index].bomb === true
+      || index === inmune
+      || checkSurroundings(index, diff).includes(inmune)) {
       index = Math.floor(Math.random() * ((diff * 8) * (diff * 8) + 1))
     }
     if (placeList[index]) placeList[index].bomb = true
@@ -40,6 +59,7 @@ const generateMap = (diff: number) => {
 
   return placeList
 }
+let start = -1
 
 export default function App() {
   let diff: number = 1
@@ -48,21 +68,23 @@ export default function App() {
   const [currentMap, setCurrentMap] = React.useState<Place[] | undefined>(undefined)
   const [flags, setFlags] = React.useState(bombs)
   const [gameConfig, setGameConfig] = React.useState()
+  const points = React.useRef<HTMLDivElement | null>(null);
+  const title = React.useRef<HTMLDivElement | null>(null);
 
-  const placeFlag = (e: React.MouseEvent<HTMLButtonElement>, id: string, currentState: string)=>{
+  const placeFlag = (e: React.MouseEvent<HTMLButtonElement>, id: string, currentState: string) => {
     e.preventDefault()
     if (!currentMap || (flags === 0 && currentState === "hide")) return
 
-    const flagSelector: {[key:string]: string} = {
+    const flagSelector: { [key: string]: string } = {
       "hide": "flag", "flag": "question", "question": "hide"
     }
 
     let result = currentMap.map((el) => {
       if (el._id !== id) return el
       else {
-        if(el.state === "hide") setFlags(flags - 1)
-        else if(el.state === "flag") setFlags(flags + 1)
-        return { ...el, state: flagSelector[el.state]}
+        if (el.state === "hide") setFlags(flags - 1)
+        else if (el.state === "flag") setFlags(flags + 1)
+        return { ...el, state: flagSelector[el.state] }
       }
     }) as Place[]
     setCurrentMap(result)
@@ -85,8 +107,12 @@ export default function App() {
       }
     }) as Place[]
     setCurrentMap(result)
+    if (bomb) {
+      if (title.current) title.current.textContent = "You Lose"
+      setGameState(false)
+    }
     if (number !== 0 || bomb) return
-    const boardSize = diff*8; 
+    const boardSize = diff * 8;
 
     const checkSurroundingsOfZero = (subI: number, resultCurrent: Place[]) => {
       let resultLocal = resultCurrent;
@@ -95,7 +121,7 @@ export default function App() {
 
       while (stack.length > 0) {
         let current = stack.pop();
-        if(current === undefined) continue
+        if (current === undefined) continue
 
         if (visited.has(current)) continue;
         visited.add(current);
@@ -104,8 +130,8 @@ export default function App() {
         let currentCol = current % boardSize;
 
         for (let j = 1; j < 9; j++) {
-          let rowOffset = j < 4 ? -1 : j > 5 ? 1 : 0; 
-          let colOffset = j === 1 || j === 4 || j === 6 ? -1 : j === 3 || j === 5 || j === 8 ? +1 : 0; 
+          let rowOffset = j < 4 ? -1 : j > 5 ? 1 : 0;
+          let colOffset = j === 1 || j === 4 || j === 6 ? -1 : j === 3 || j === 5 || j === 8 ? +1 : 0;
 
           let newRow = currentRow + rowOffset;
           let newCol = currentCol + colOffset;
@@ -114,7 +140,7 @@ export default function App() {
 
           let secIndex = newRow * boardSize + newCol;
 
-          if (!resultLocal[secIndex]) continue; 
+          if (!resultLocal[secIndex]) continue;
 
           if (resultLocal[secIndex].state === "hide") resultLocal[secIndex].state = "view"
 
@@ -131,36 +157,98 @@ export default function App() {
     "flag": faFlag, "question": faQuestion
   }
 
-  React.useEffect(() => {
-    if (currentMap === undefined) setCurrentMap(generateMap(diff))
-  })
-
   const colorScale = ["",
     "#548CCD", "#65BFA7", "#7EB753", "#E5D741", "#F2AF44", "#FA8343", "#FC5845", "#FF457D"
   ]
 
+  React.useEffect(() => {
+    if (!currentMap) return
+    if (start !== -1) {
+      viewPlace(currentMap[start]._id)
+      start = -1
+    }
+    let hide = document.querySelector(".hide")
+    let question = document.querySelector(".question")
+    if (hide === null && question === null && gameState) {
+      setGameState(false)
+      if (title.current && points.current
+        && points.current.textContent !== null) {
+        title.current.textContent = "You Win"
+        if(title.current.nextSibling) title.current.nextSibling.textContent = "Score: "+points.current.textContent
+      }
+    }
+  })
+
+  React.useEffect(() => {
+    if (!gameState) return
+    if (!points.current) return
+    if (title.current) title.current.textContent = ""
+    points.current.textContent = "0"
+    const interval = setInterval(() => {
+      if (points.current
+        && points.current.textContent !== null) points.current.textContent = `${parseInt(points.current.textContent) + 1}`
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [gameState])
+
+  let fakeMap = []
+  if (!currentMap) {
+    for (let i = 0; i < (diff * 8) * (diff * 8); i++) {
+      fakeMap.push(<button
+        key={Math.random()}
+        className="hide"
+        onClick={() => {
+          setCurrentMap(generateMap(diff, i)); start = i
+          setGameState(true)
+        }}
+      >
+      </button>)
+    }
+  }
+
+  const reset = () => {
+    if (points.current) points.current.textContent = "0"
+      if (title.current && points.current
+        && points.current.textContent !== null) {
+        title.current.textContent = ""
+        if(title.current.nextSibling) title.current.nextSibling.textContent = ""
+      }
+    setGameState(false)
+    setCurrentMap(undefined)
+    setFlags(diff * diff * 10)
+  }
+
   return <main>
+    <section className="pop">
+      <div className="title" ref={title}></div>
+      <p></p>
+      <button onClick={reset}>Reset</button>
+    </section>
     <header>
       <div>{flags}</div>
+      <button onClick={reset}>Reset</button>
+      <div ref={points}>0</div>
     </header>
     <section className="map"
-      style={{ gridTemplateColumns: `repeat(${(diff * 8)}, 50px)` }}
+      style={{ gridTemplateColumns: `repeat(${(8)}, 50px)`, opacity: gameState ? 1 : 0.5 }}
     >
-      {currentMap && currentMap.map((el, i) => {
+      {currentMap ? currentMap.map((el) => {
         return <button
           key={Math.random()}
           className={el.state}
-          onClick={() => { if(el.state === "hide")viewPlace(el._id) }}
-          onContextMenu={(e)=>{ if(el.state !== "view")placeFlag(e, el._id, el.state) }}
+          onClick={() => { if (gameState && el.state === "hide") viewPlace(el._id) }}
+          onContextMenu={(e) => { if (gameState && el.state !== "view") placeFlag(e, el._id, el.state) }}
           style={el.state === "view" ? { backgroundColor: el.bomb ? "red" : colorScale[el.number] } : {}}
         >
           {
             el.state === "view" ?
-            el.bomb ? <FontAwesomeIcon icon={faBomb} /> : el.number === 0 ? "" : el.number
-            : el.state !== "hide" && <FontAwesomeIcon icon={placeContent[el.state]} />
+              el.bomb ? <FontAwesomeIcon icon={faBomb} /> : el.number === 0 ? "" : el.number
+              : el.state !== "hide" && <FontAwesomeIcon icon={placeContent[el.state]} />
           }
         </button>
-      })}
+      }) : fakeMap
+      }
     </section>
   </main>
 
