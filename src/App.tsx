@@ -157,8 +157,7 @@ export default function App() {
     "flag": faFlag, "question": faQuestion
   }
 
-  const colorScale = ["",
-    "#548CCD", "#65BFA7", "#7EB753", "#E5D741", "#F2AF44", "#FA8343", "#FC5845", "#FF457D"
+  const colorScale = ["", "#65BFA7", "#7EB753", "#E5D741", "#F2AF44", "#FA8343", "#FC5845", "#FF457D", "#fb35d8"
   ]
 
   React.useEffect(() => {
@@ -221,17 +220,19 @@ export default function App() {
 
   return <main>
     <section className="pop">
-      <div className="title" ref={title}></div>
-      <p></p>
-      <button onClick={reset}>Reset</button>
+      <section className="content">
+        <div className="title" ref={title}></div>
+        <p></p>
+        <button className="button" onClick={reset}>Reset</button>
+      </section>
     </section>
     <header>
       <div>{flags}</div>
-      <button onClick={reset}>Reset</button>
+      <button className="button" onClick={reset}>Reset</button>
       <div ref={points}>0</div>
     </header>
     <section className="map"
-      style={{ gridTemplateColumns: `repeat(${(8)}, 50px)`, opacity: gameState ? 1 : 0.5 }}
+      style={{ gridTemplateColumns: `repeat(${(8)}, ${100/8}%)`}}
     >
       {currentMap ? currentMap.map((el) => {
         return <button
