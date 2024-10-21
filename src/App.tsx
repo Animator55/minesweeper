@@ -240,11 +240,14 @@ export default function App() {
           className={el.state}
           onClick={() => { if (gameState && el.state === "hide") viewPlace(el._id) }}
           onContextMenu={(e) => { if (gameState && el.state !== "view") placeFlag(e, el._id, el.state) }}
-          style={el.state === "view" ? { backgroundColor: el.bomb ? "red" : colorScale[el.number] } : {}}
+          style={el.state === "view" ? { 
+            color: el.bomb ? "red" : colorScale[el.number],
+            borderColor: el.bomb ? "red" : colorScale[el.number]
+          } : {}}
         >
           {
             el.state === "view" ?
-              el.bomb ? <FontAwesomeIcon icon={faBomb} /> : el.number === 0 ? "" : el.number
+              el.bomb ? <FontAwesomeIcon icon={faBomb} /> : el.number === 0 ? "" : <h3>{el.number}</h3>
               : el.state !== "hide" && <FontAwesomeIcon icon={placeContent[el.state]} />
           }
         </button>
