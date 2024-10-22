@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { Place } from "./vite-env"
-import { faBomb, faFlag, faQuestion } from "@fortawesome/free-solid-svg-icons"
+import { faArrowPointer, faBomb, faFlag, faQuestion } from "@fortawesome/free-solid-svg-icons"
 import React from "react"
 
 import "./assets/App.css"
@@ -64,11 +64,16 @@ let start = -1
 export default function App() {
   let diff: number = 1
   let bombs = diff * diff * 10
+  const [tool, setTool] = React.useState("normal")
   const [gameState, setGameState] = React.useState<boolean>(false)
   const [currentMap, setCurrentMap] = React.useState<Place[] | undefined>(undefined)
   const [flags, setFlags] = React.useState(bombs)
   const points = React.useRef<HTMLDivElement | null>(null);
   const title = React.useRef<HTMLDivElement | null>(null);
+
+  const tools: {[key:string]:any} = {
+    "normal": faArrowPointer, "flag": faFlag
+  }
 
   const placeFlag = (e: React.MouseEvent<HTMLButtonElement>, id: string, currentState: string) => {
     e.preventDefault()
@@ -78,9 +83,11 @@ export default function App() {
       "hide": "flag", "flag": "question", "question": "hide"
     }
 
+    
     let result = currentMap.map((el) => {
       if (el._id !== id) return el
       else {
+        console.log(el.state)
         if (el.state === "hide") setFlags(flags - 1)
         else if (el.state === "flag") setFlags(flags + 1)
         return { ...el, state: flagSelector[el.state] }
@@ -160,7 +167,11 @@ export default function App() {
   ]
 
   React.useEffect(() => {
-    if (!currentMap) return
+    if (!currentMap) {
+      let map = document.querySelector(".map") as HTMLDivElement
+      if(map) map.classList.add("fade")
+      return
+    }
     if (start !== -1) {
       viewPlace(currentMap[start]._id)
       start = -1
@@ -212,9 +223,10 @@ export default function App() {
         title.current.textContent = ""
         if(title.current.nextSibling) title.current.nextSibling.textContent = ""
       }
+    setTool("normal")
     setGameState(false)
-    setCurrentMap(undefined)
     setFlags(diff * diff * 10)
+    setCurrentMap(undefined)
   }
 
   return <main>
@@ -226,19 +238,25 @@ export default function App() {
       </section>
     </section>
     <header>
-      <div className="numbers">{flags}</div>
+      <div className="numbers"><FontAwesomeIcon icon={faFlag}/><p>{flags}</p></div>
       <button className="button" onClick={reset}>Reset</button>
       <div className="numbers" ref={points}></div>
     </header>
     <section className="map"
+      key={Math.random()}
       style={{ gridTemplateColumns: `repeat(${(8)}, ${100/8}%)`}}
     >
       {currentMap ? currentMap.map((el) => {
         return <button
           key={Math.random()}
           className={el.state}
-          onClick={() => { if (gameState && el.state === "hide") viewPlace(el._id) }}
-          onContextMenu={(e) => { if (gameState && el.state !== "view") placeFlag(e, el._id, el.state) }}
+          onClick={(e) => { 
+            if (gameState) {
+              if(tool === "normal" && el.state === "hide") viewPlace(el._id) 
+              else if(tool === "flag")placeFlag(e, el._id, el.state)
+            }
+            }}
+          onContextMenu={(e) => { if (gameState && el.state !== "view" && tool === "normal") placeFlag(e, el._id, el.state) }}
           style={el.state === "view" ? { 
             color: el.bomb ? "red" : colorScale[el.number],
             borderColor: el.bomb ? "red" : colorScale[el.number]
@@ -253,6 +271,17 @@ export default function App() {
       }) : fakeMap
       }
     </section>
+    <div className="tool-selector">
+      {Object.keys(tools).map(el=>{
+        return <button
+          key={Math.random()}
+          className={el === tool ? "active" : ""}
+          onClick={()=>{setTool(el)}}
+        >
+          <FontAwesomeIcon icon={tools[el]}/>
+        </button>
+      })}
+    </div>
   </main>
 
 }
