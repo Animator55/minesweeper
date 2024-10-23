@@ -253,7 +253,7 @@ export default function App() {
           onClick={(e) => { 
             if (gameState) {
               if(tool === "normal" && el.state === "hide") viewPlace(el._id) 
-              else if(tool === "flag")placeFlag(e, el._id, el.state)
+              else if(tool === "flag" && el.state !== "view")placeFlag(e, el._id, el.state)
             }
             }}
           onContextMenu={(e) => { if (gameState && el.state !== "view" && tool === "normal") placeFlag(e, el._id, el.state) }}
